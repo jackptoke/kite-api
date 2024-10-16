@@ -34,4 +34,8 @@ public class WordEntryService {
     public List<WordEntry> findWords(String word) {
         return wordEntryRepo.findWordEntries(word);
     }
+
+    public void delete(WordEntry wordEntry) {
+        wordEntryRepo.delete(wordEntry);
+    }
 }

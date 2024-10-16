@@ -1,6 +1,5 @@
 package dev.toke.kiteapi.controllers;
 
-import dev.toke.kiteapi.dtos.KiteResponse;
 import dev.toke.kiteapi.dtos.TranslationWriteDto;
 import dev.toke.kiteapi.models.Translation;
 import dev.toke.kiteapi.services.TranslationService;
@@ -14,27 +13,29 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/translations")
 @RequiredArgsConstructor
 public class TranslationController {
+    public static final String TRANSLATIONS_PATH = "/api/v1/translations";
+    public static final String TRANSLATION_ID_PATH = TRANSLATIONS_PATH + "/{id}";
+
     private final TranslationService translationService;
     private final WordEntryService wordEntryService;
 
-    @GetMapping
-    public ResponseEntity<KiteResponse<List<Translation>>> findAllTranslations() {
+    @GetMapping(TRANSLATIONS_PATH)
+    public ResponseEntity<List<Translation>> findAllTranslations() {
         var result = translationService.findAll();
-        return ResponseEntity.ok(new KiteResponse<>(result, 200, "Success"));
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<KiteResponse<Translation>> findTranslationById(@PathVariable("id") Long id) {
+    @GetMapping(TRANSLATION_ID_PATH)
+    public ResponseEntity<Translation> findTranslationById(@PathVariable("id") Long id) {
         var result = translationService.findById(id);
-        return result.map(translation -> ResponseEntity.ok(new KiteResponse<>(translation, 200, "Success")))
-                .orElseGet(() -> ResponseEntity.ok(new KiteResponse<>(null, 404, "Translation not found")));
+        return result.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<KiteResponse<Translation>> newTranslation(@RequestBody TranslationWriteDto newTranslation) {
+    @PostMapping(TRANSLATIONS_PATH)
+    public ResponseEntity<Translation> newTranslation(@RequestBody TranslationWriteDto newTranslation) {
         var wordResult = wordEntryService.findById(newTranslation.getWordEntryId());
         if(wordResult.isPresent()) {
             var word = wordResult.get();
@@ -52,13 +53,13 @@ public class TranslationController {
             String url = "/api/v1/translations/" + translation.getId();
             URI uri = URI.create(url);
             return ResponseEntity.created(uri)
-                    .body(new KiteResponse<>(translation, 201, "translation added"));
+                    .body(translation);
         }
-        return ResponseEntity.ok(new KiteResponse<>(null, 404, "Word not found"));
+        return ResponseEntity.notFound().build();
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<KiteResponse<Translation>> updateTranslation(@PathVariable("id") Long id,
+    @PatchMapping(TRANSLATION_ID_PATH)
+    public ResponseEntity<Translation> updateTranslation(@PathVariable("id") Long id,
                                                                        @RequestBody TranslationWriteDto updatedTranslation) {
         var result = translationService.findById(id);
 
@@ -72,12 +73,12 @@ public class TranslationController {
                 translation.setCategory(updatedTranslation.getCategory());
             translation.setUpdatedAt(LocalDateTime.now());
             translationService.save(translation);
-            return ResponseEntity.ok(new KiteResponse<>(translation, 200, "translation updated"));
+            return ResponseEntity.ok(translation);
         }
-        return ResponseEntity.ok(new KiteResponse<>(null, 404, "Translation not found"));
+        return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(TRANSLATION_ID_PATH)
     public ResponseEntity<Object> deleteTranslation(@PathVariable("id") Long id) {
         var result = translationService.findById(id);
         if(result.isPresent()) {

@@ -29,11 +29,23 @@ public class ApprovalService {
         }else return approvalRepo.save(approval);
     }
 
-    public Optional<Approval> findApproval(long userId, long translationId) {
+    public List<Approval> findAllApprovals() {
+        return approvalRepo.findAll();
+    }
+
+    public Optional<Approval> findById(Long id) {
+        return approvalRepo.findById(id);
+    }
+
+    public Optional<Approval> findApprovalByUserIdAndTranslationId(long userId, long translationId) {
         return approvalRepo.findApprovalByUserIdAndTranslationId(userId, translationId);
     }
 
     public List<Approval> findApprovals(long translationId) {
         return approvalRepo.findApprovalsByTranslationId(translationId);
+    }
+
+    public void delete(Approval approval) {
+        approvalRepo.delete(approval);
     }
 }

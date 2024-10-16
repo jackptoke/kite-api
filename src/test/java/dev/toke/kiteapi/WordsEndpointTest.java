@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.random.RandomGenerator;
 
+import static dev.toke.kiteapi.controllers.WordEntryController.WORDS_ID_PATH;
+import static dev.toke.kiteapi.controllers.WordEntryController.WORDS_PATH;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -89,14 +91,14 @@ public class WordsEndpointTest {
                     Collections.emptyList()));
 
         given(wordEntryService.findAll()).willReturn(words);
-        mockMvc.perform(get("/api/v1/words")
+        mockMvc.perform(get(WORDS_PATH)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.data.length()", is(3)))
-                .andExpect(jsonPath("$.data[0].id", is(words.getFirst().getId().intValue())))
-                .andExpect(jsonPath("$.data[0].text", is(words.getFirst().getText())))
-                .andExpect(jsonPath("$.data[0].difficultyLevel", is("EASY")));
+                .andExpect(jsonPath("$.length()", is(3)))
+                .andExpect(jsonPath("$[0].id", is(words.getFirst().getId().intValue())))
+                .andExpect(jsonPath("$[0].text", is(words.getFirst().getText())))
+                .andExpect(jsonPath("$[0].difficultyLevel", is("EASY")));
     }
 
     @Test
@@ -106,13 +108,13 @@ public class WordsEndpointTest {
 
         given(wordEntryService.findById(any(Long.class))).willReturn(Optional.of(word));
 
-        mockMvc.perform(get("/api/v1/words/" + id)
+        mockMvc.perform(get(WORDS_ID_PATH, id)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.data.id", is(word.getId().intValue())))
-                .andExpect(jsonPath("$.data.text", is(word.getText())))
-                .andExpect(jsonPath("$.data.difficultyLevel", is(DifficultyLevel.HARD.toString())));
+                .andExpect(jsonPath("$.id", is(word.getId().intValue())))
+                .andExpect(jsonPath("$.text", is(word.getText())))
+                .andExpect(jsonPath("$.difficultyLevel", is(DifficultyLevel.HARD.toString())));
 
     }
 
@@ -133,17 +135,15 @@ public class WordsEndpointTest {
                 Collections.emptyList());
 
         String requestJsonString = objectMapper.writeValueAsString(newWord);
-        mockMvc.perform(post("/api/v1/words")
+        mockMvc.perform(post(WORDS_PATH)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(requestJsonString)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.statusCode", is(201)))
-                .andExpect(jsonPath("$.message", is("success")))
-                .andExpect(jsonPath("$.data.id", is(word.getId().intValue())))
-                .andExpect(jsonPath("$.data.text", is(word.getText())))
-                .andExpect(jsonPath("$.data.difficultyLevel", is("HARD")));
+                .andExpect(jsonPath("$.id", is(word.getId().intValue())))
+                .andExpect(jsonPath("$.text", is(word.getText())))
+                .andExpect(jsonPath("$.difficultyLevel", is("HARD")));
     }
 
 

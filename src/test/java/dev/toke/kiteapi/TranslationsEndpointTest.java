@@ -23,11 +23,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.random.RandomGenerator;
 
+import static dev.toke.kiteapi.controllers.TranslationController.TRANSLATIONS_PATH;
+import static dev.toke.kiteapi.controllers.TranslationController.TRANSLATION_ID_PATH;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TranslationController.class)
@@ -81,7 +85,7 @@ public class TranslationsEndpointTest {
 
         given(translationService.findAll()).willReturn(translations);
 
-        mockMvc.perform(get("/api/v1/translations")
+        mockMvc.perform(get(TRANSLATIONS_PATH)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -128,11 +132,69 @@ public class TranslationsEndpointTest {
         given(wordEntryService.findById(any(Long.class))).willReturn(Optional.of(word));
         given(wordEntryService.save(any(WordEntry.class))).willReturn(word2);
 
-        mockMvc.perform(post("/api/v1/translations")
+        mockMvc.perform(post(TRANSLATIONS_PATH)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(translationWriteDto)));
 
         verify(translationService).save(any(Translation.class));
+    }
+
+    @Test
+    void updateTranslation() throws Exception {
+        Translation oldTranslation= new Translation(13L, "တၢ်တမံၤမံၤ", Category.NOUN, Subject.GENERAL, false,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                RandomGenerator.getDefault().nextLong(1, 10),
+                word,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+
+        Translation translation= new Translation(13L, "တၢ်တမံၤမံၤ", Category.NOUN, Subject.GENERAL, false,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                RandomGenerator.getDefault().nextLong(1, 10),
+                word,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+
+        TranslationWriteDto translationWriteDto = new TranslationWriteDto(0L, 13L, "တၢ်အီၣ်", Category.NOUN, Subject.GENERAL, 1L);
+
+        given(translationService.findById(any(Long.class))).willReturn(Optional.of(oldTranslation));
+        given(translationService.save(any(Translation.class))).willReturn(translation);
+
+        mockMvc.perform(patch(TRANSLATION_ID_PATH, translation.getId())
+                        .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(translationWriteDto))
+                ).andExpect(status().isOk())
+                .andExpect(jsonPath("$.karenText", is("တၢ်အီၣ်")))
+                .andExpect(jsonPath("$.category", is("NOUN")));
+
+        verify(translationService).save(any(Translation.class));
+
+
+    }
+
+    @Test
+    void deleteTranslation() throws Exception {
+        Translation translation= new Translation(13L, "တၢ်တမံၤမံၤ", Category.NOUN, Subject.GENERAL, false,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                RandomGenerator.getDefault().nextLong(1, 10),
+                word,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+
+        given(translationService.findById(any(Long.class))).willReturn(Optional.of(translation));
+
+        mockMvc.perform(delete(TRANSLATION_ID_PATH, translation.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(translationService).delete(any(Translation.class));
     }
 }
